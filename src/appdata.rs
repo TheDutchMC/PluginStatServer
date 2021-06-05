@@ -1,4 +1,4 @@
-use prometheus::{Gauge, Registry};
+use prometheus::{Gauge, Registry, Opts, IntGaugeVec};
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
 use std::collections::HashMap;
@@ -128,28 +128,52 @@ impl Env {
 
 #[derive(Clone)]
 pub struct Prom {
-    pub registry:   Registry,
-    pub player_avg: Gauge,
-    pub player_inc: u64,
-    pub mem_mb_avg: Gauge,
-    pub mem_inc:    u64
+    pub registry:       Registry,
+    pub player_avg:     Gauge,
+    pub player_inc:     u64,
+    pub mem_mb_avg:     Gauge,
+    pub mem_inc:        u64,
+    pub java_version:   IntGaugeVec,
+    pub mc_versions:    IntGaugeVec,
+    pub os:             IntGaugeVec,
+    pub timezone:       IntGaugeVec
 }
 
 impl Prom {
     pub fn new() -> Self {
-        let player_avg = Gauge::new("player_avg", "Average player count on all servers").unwrap();
-        let mem_mb_avg = Gauge::new("mem_mb_avg", "Average memory consumption on all servers").unwrap();
+        let player_avg = Gauge::new("pluginstat_player_avg", "Average player count on all servers").unwrap();
+        let mem_mb_avg = Gauge::new("pluginstat_mem_mb_avg", "Average memory consumption on all servers").unwrap();
+
+        let opts = Opts::new("pluginstat_java_version", "Java version used on Minecraft servers");
+        let java_version = IntGaugeVec::new(opts, &["version"]).unwrap();
+
+        let opts = Opts::new("pluginstat_mc_versions", "Minecraft versions used on Minecraft servers");
+        let mc_versions = IntGaugeVec::new(opts, &["version"]).unwrap();
+
+        let opts = Opts::new("pluginstat_os", "OS' used for Minecraft servers");
+        let os = IntGaugeVec::new(opts, &["version"]).unwrap();
+
+        let opts = Opts::new("pluginstat_timezone", "used for Minecraft servers");
+        let timezone = IntGaugeVec::new(opts, &["version"]).unwrap();
 
         let registry = Registry::new();
         registry.register(Box::new(player_avg.clone())).unwrap();
         registry.register(Box::new(mem_mb_avg.clone())).unwrap();
+        registry.register(Box::new(java_version.clone())).unwrap();
+        registry.register(Box::new(mc_versions.clone())).unwrap();
+        registry.register(Box::new(os.clone())).unwrap();
+        registry.register(Box::new(timezone.clone())).unwrap();
 
         Self {
             registry,
             player_avg,
             player_inc: 0,
             mem_mb_avg,
-            mem_inc: 0
+            mem_inc: 0,
+            java_version,
+            mc_versions,
+            os,
+            timezone
         }
     }
 }

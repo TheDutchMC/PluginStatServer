@@ -1,7 +1,7 @@
 use actix_web::{HttpResponse, web, post};
 use serde::{Deserialize, Serialize};
 use mysql::prelude::Queryable;
-use mysql::{Row, Params, params};
+use mysql::{Params, params};
 use crate::appdata::AppData;
 use rand::Rng;
 
@@ -32,14 +32,6 @@ pub async fn report_stat(data: web::Data<AppData>, body: web::Json<Statistics>) 
         Ok(conn) => conn,
         Err(e) => {
             eprintln!("Failed to create mysql connection: {:?}", e);
-            return HttpResponse::InternalServerError().finish();
-        }
-    };
-
-    let existing_uuid_check = match conn.query::<Row, &str>("SELECT uuid FROM stats") {
-        Ok(r) => r,
-        Err(e) => {
-            eprintln!("Failed to query for existing UUIDs in the database: {:?}", e);
             return HttpResponse::InternalServerError().finish();
         }
     };
