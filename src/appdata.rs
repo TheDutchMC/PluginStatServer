@@ -130,9 +130,7 @@ impl Env {
 pub struct Prom {
     pub registry:       Registry,
     pub player_avg:     Gauge,
-    pub player_inc:     u64,
     pub mem_mb_avg:     Gauge,
-    pub mem_inc:        u64,
     pub java_version:   IntGaugeVec,
     pub mc_versions:    IntGaugeVec,
     pub os:             IntGaugeVec,
@@ -167,9 +165,7 @@ impl Prom {
         Self {
             registry,
             player_avg,
-            player_inc: 0,
             mem_mb_avg,
-            mem_inc: 0,
             java_version,
             mc_versions,
             os,

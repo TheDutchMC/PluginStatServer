@@ -62,14 +62,6 @@ pub async fn report_stat(data: web::Data<AppData>, body: web::Json<Statistics>) 
         HttpResponse::InternalServerError().finish();
     }
 
-    let avg_players = &data.prom.player_avg.get();
-    let new_avg = (avg_players + *&body.player_count as f64) / ((data.prom.player_inc + 1) as f64);
-    &data.prom.player_avg.set(new_avg);
-
-    let avg_mem = &data.prom.mem_mb_avg.get();
-    let new_avg = (avg_mem + *&body.mem_mb as f64) / ((data.prom.mem_inc + 1) as f64);
-    &data.prom.mem_mb_avg.set(new_avg);
-
     HttpResponse::Ok().body(serde_json::to_string(&Response { status: 200, new_uuid: None }).unwrap())
 
 }

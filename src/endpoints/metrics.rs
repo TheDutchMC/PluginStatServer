@@ -13,6 +13,9 @@ pub async fn get_metrics(data: web::Data<AppData>) -> HttpResponse {
     let os = select_to_map::<String>(&data, "os");
     let timezone = select_to_map::<String>(&data, "timezone");
 
+    let player_avg = get_avg(&data, "player_count");
+    let mem_avg = get_avg(&data, "mem_mb");
+
     let java_versions = match java_versions.await {
         Ok(j) => j,
         Err(e) => {
@@ -57,6 +60,25 @@ pub async fn get_metrics(data: web::Data<AppData>) -> HttpResponse {
         &data.prom.timezone.with_label_values(&[&k]).set(v as i64);
     }
 
+    let player_avg = match player_avg.await {
+        Ok(avg) => avg,
+        Err(e) => {
+            eprintln!("Failed to query player average: {}", e);
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+
+    let mem_avg = match mem_avg.await {
+        Ok(avg) => avg,
+        Err(e) => {
+            eprintln!("Failed to query mem average: {}", e);
+            return HttpResponse::InternalServerError().finish();
+        }
+    };
+
+    data.prom.player_avg.set(player_avg);
+    data.prom.mem_mb_avg.set(mem_avg);
+
     let families = data.prom.registry.gather();
     let mut buff = Vec::new();
 
@@ -64,6 +86,27 @@ pub async fn get_metrics(data: web::Data<AppData>) -> HttpResponse {
     encoder.encode(&families, &mut buff).unwrap();
 
     HttpResponse::Ok().body(String::from_utf8(buff).unwrap())
+}
+
+async fn get_avg(data: &AppData, field: &str) -> Result<f64, String> {
+    let mut conn = match data.pool.get_conn() {
+        Ok(c) => c,
+        Err(e) => return Err(e.to_string())
+    };
+
+    let sql_value = match conn.query::<Row, &str>(&format!("SELECT {field} FROM stats", field = field)) {
+        Ok(v) => v,
+        Err(e) => return Err(e.to_string())
+    };
+
+    let mut total = 0f64;
+    let inc = sql_value.len();
+    for row in sql_value {
+        let v = row.get::<f64, &str>(field).unwrap();
+        total += v;
+    }
+
+    Ok(total / (inc as f64))
 }
 
 async fn select_to_map<T: FromValue + Display>(data: &AppData, field: &str) -> Result<HashMap<String, usize>, String> {
