@@ -1,8 +1,14 @@
+#[macro_use]
+extern crate lazy_static;
+
 use actix_web::{HttpServer, App};
 use actix_web::middleware::Logger;
+use crate::mysql::spawn_queue;
 
 mod appdata;
 mod endpoints;
+mod mysql;
+mod common;
 
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {
@@ -15,13 +21,17 @@ pub async fn main() -> std::io::Result<()> {
         }
     };
 
-    let appdata = match appdata::AppData::new(&env) {
+    let (tx, rx) = crossbeam_channel::unbounded();
+
+    let appdata = match appdata::AppData::new(&env, tx) {
         Ok(appdata) => appdata,
         Err(err) => {
             eprintln!("Unable to start: {}", err);
             std::process::exit(1);
         }
     };
+
+    spawn_queue(appdata.clone(), rx);
 
     match appdata.check_db(&env) {
         Ok(passed) => {

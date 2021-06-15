@@ -2,15 +2,17 @@ use prometheus::{Gauge, Registry, Opts, IntGaugeVec};
 use mysql::prelude::Queryable;
 use mysql::{Row, Params, params};
 use std::collections::HashMap;
+use crate::common::Statistics;
 
 #[derive(Clone)]
 pub struct AppData {
     pub pool:   mysql::Pool,
-    pub prom:   Prom
+    pub prom:   Prom,
+    pub tx:     crossbeam_channel::Sender<Statistics>
 }
 
 impl AppData {
-    pub fn new(env: &Env) -> Result<Self, String> {
+    pub fn new(env: &Env, tx: crossbeam_channel::Sender<Statistics>) -> Result<Self, String> {
         let env = env.clone();
 
         let mysql_uri = format!("mysql://{username}:{password}@{host}/{database}",
@@ -27,7 +29,8 @@ impl AppData {
 
         Ok(Self {
             pool: pool.unwrap(),
-            prom: Prom::new()
+            prom: Prom::new(),
+            tx
         })
     }
 
