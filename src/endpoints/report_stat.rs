@@ -28,5 +28,4 @@ pub async fn report_stat(data: web::Data<AppData>, body: web::Json<Statistics>) 
     }
 
     HttpResponse::Ok().body(serde_json::to_string(&Response { status: 200, new_uuid: None }).unwrap())
-
 }

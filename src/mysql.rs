@@ -44,7 +44,7 @@ pub fn spawn_queue(data: AppData, rx: crossbeam_channel::Receiver<Statistics>) {
                 stmt.push_str(&row);
             }
 
-            //REmove trailing comma
+            //Remove trailing comma
             stmt.pop();
 
             let timestamp = chrono::Utc::now().timestamp();

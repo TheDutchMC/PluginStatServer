@@ -4,11 +4,13 @@ extern crate lazy_static;
 use actix_web::{HttpServer, App};
 use actix_web::middleware::Logger;
 use crate::mysql::spawn_queue;
+use crate::collector::spawn_collector;
 
 mod appdata;
 mod endpoints;
 mod mysql;
 mod common;
+mod collector;
 
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {
@@ -32,6 +34,7 @@ pub async fn main() -> std::io::Result<()> {
     };
 
     spawn_queue(appdata.clone(), rx);
+    spawn_collector(appdata.clone());
 
     match appdata.check_db(&env) {
         Ok(passed) => {
