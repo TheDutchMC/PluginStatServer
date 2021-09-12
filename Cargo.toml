@@ -1,0 +1,22 @@
+[package]
+name = "plugin_stat_server"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "3.3.2"
+serde = "1.0.130"
+serde_json = "1.0.67"
+prometheus = "0.12.0"
+log = "0.4.14"
+actix-cors = "0.5.4"
+
+[dependencies.log4rs]
+version = "1.0.0"
+default-features = false
+features = ["console_appender"]
+
+[build-dependencies.serde_derive]
+version = "1.0.130"
